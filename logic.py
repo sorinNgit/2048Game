@@ -1,4 +1,4 @@
-import random
+import random, misc
 
 def start(nr_lines):
 
@@ -19,21 +19,23 @@ def start(nr_lines):
     # adaugam un nou bloc de 2 dupa fiecare mutare a utilizatorului
     add_2(matrix, nr_lines)
 
+
     return matrix
 
 def add_2(matrix, nr_lines):
 
     # Alegem un punct random in matricea noastra
-    row = random.randint(0, nr_lines)
-    column = random.randint(0, nr_lines)
+    row = random.randint(0, nr_lines-1)
+    column = random.randint(0, nr_lines-1)
 
     # Cat timp punctul nostru este diferit de 0 (este ocupat de alta casuta), schimbam punctul pana ajungem la unul nul
-    while(matrix[row][column] != 0):
-        row = random.randint(0, nr_lines)
-        column = random.randint(0, nr_lines)
+    while matrix[row][column] != 0:
+        row = random.randint(0, nr_lines-1)
+        column = random.randint(0, nr_lines-1)
 
     # Punem 2 in blocul gasit liber
     matrix[row][column] = 2
+    return matrix
 
 # Verificam daca exita un bloc de 2048, in cazul in care exista jocul este castigat
 def check_2048(matrix, nr_lines):
@@ -72,6 +74,7 @@ def check_continue(matrix, nr_lines):
 def compress(matrix, nr_lines):
 
     # Variabila de tip bool sa urmarim daca s-au facut schimbari
+
     done = False
 
     # Noua matrice
@@ -79,16 +82,18 @@ def compress(matrix, nr_lines):
     for i in range(nr_lines):
         new.append([0] * nr_lines)
 
+
+
     for i in range(nr_lines):
         position = 0
         for j in range(nr_lines):
-            if(matrix[i][j] != 0):
+            if matrix[i][j] != 0:
 
                 # Daca blocul nu este liber vom shifta numarul in locul anterior
                 # de pe acel rand, determinat de variabila position
                 new[i][position] = matrix[i][j]
 
-                if(j != position):
+                if j != position:
                     done = True
                 position += 1
 
@@ -97,12 +102,12 @@ def compress(matrix, nr_lines):
 # Functie pentru a combina blocurile dupa ce comprimam matricea
 def merge(matrix, nr_lines, done):
     for i in range(nr_lines):
-        for j in range(nr_lines):
+        for j in range(nr_lines-1):
             if matrix[i][j] == matrix[i][j+1] and matrix[i][j] != 0:
                 matrix[i][j] *= 2
-                matrix[i][j] = 0
+                matrix[i][j+1] = 0
                 done = True
-        return matrix, done
+    return matrix, done
 
 
 # Abordarea noastra este comprimare -> combinare -> comprimare
@@ -168,12 +173,9 @@ def left(matrix, nr_lines):
 
 def right(matrix, nr_lines):
     print("RIGHT")
-
     matrix = reverse(matrix)
-
     matrix, done = compress(matrix,nr_lines)
     matrix, done = merge(matrix,nr_lines, done)
     matrix = compress(matrix,nr_lines)[0]
-
     matrix = reverse(matrix)
     return matrix, done
