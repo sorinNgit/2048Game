@@ -1,11 +1,20 @@
 import random, misc
+import numpy as np
 
-def start(nr_lines):
+NEW_TILE_DISTRIBUTION = np.array([2, 2, 2, 2, 2, 2, 2, 2 ,2, 4])
+SPM_SCALE_PARAM = 10
+SL_SCALE_PARAM = 4
+SEARCH_PARAM = 200
+CELL_COUNT = 4
+NUMBER_OF_SQUARES = CELL_COUNT * CELL_COUNT
+
+def start():
 
     # Initializam o matrice de nr_lines x nr_lines cu zerouri, vom folosi matricea pe post de tabla de joc
-    matrix = []
-    for i in range(nr_lines):
-        matrix.append([0] * nr_lines)
+    board = np.zeros((NUMBER_OF_SQUARES), dtype="int")
+    initial_twos = np.random.default_rng().choice(NUMBER_OF_SQUARES, 1, replace=False)
+    board[initial_twos] = 2
+    board = board.reshape((CELL_COUNT, CELL_COUNT))
 
 
     # Prezentam utilizatorului controalele jocului
@@ -14,13 +23,15 @@ def start(nr_lines):
     print("'A' , 'a' or Left Arrow : Move Left")
     print("'S' , 's' or Down Arrow : Move Down")
     print("'D' , 'd' or Right Arrow : Move Right")
+    print("'P' or 'p' : Let the AI play")
+    print("'Q' or 'q' : Make one move with the AI")
 
     # Cand vom incepe jocul il incepem cu un singur 2 pe masa, deci
     # adaugam un nou bloc de 2 dupa fiecare mutare a utilizatorului
-    add_2(matrix, nr_lines)
+    #add_2(matrix, nr_lines)
 
 
-    return matrix
+    return board
 
 def add_2(matrix, nr_lines):
 
@@ -144,7 +155,14 @@ def up(matrix, nr_lines):
     matrix = compress(matrix,nr_lines)[0]
 
     matrix = transpose(matrix)
-    return matrix, done
+
+    score = 0
+    for i in range(len(matrix)):
+        for j in range(len(matrix[i])):
+            score += matrix[i][j]
+
+    score += 2
+    return matrix, done, score
 
 
 def down(matrix, nr_lines):
@@ -157,7 +175,15 @@ def down(matrix, nr_lines):
     matrix = compress(matrix,nr_lines)[0]
 
     matrix = transpose(reverse(matrix))
-    return matrix, done
+
+    score = 0
+    for i in range(len(matrix)):
+        for j in range(len(matrix[i])):
+            score += matrix[i][j]
+
+    score += 2
+
+    return matrix, done, score
 
 
 # Pentru ca am facut compress-ul la stanga, nu avem nevoie de reverse si nici de transpose pentru shiftare
@@ -168,7 +194,14 @@ def left(matrix, nr_lines):
     matrix, done = merge(matrix,nr_lines, done)
     matrix = compress(matrix,nr_lines)[0]
 
-    return matrix, done
+    score = 0
+    for i in range(len(matrix)):
+        for j in range(len(matrix[i])):
+            score += matrix[i][j]
+
+    score += 2
+
+    return matrix, done, score
 
 
 def right(matrix, nr_lines):
@@ -178,4 +211,37 @@ def right(matrix, nr_lines):
     matrix, done = merge(matrix,nr_lines, done)
     matrix = compress(matrix,nr_lines)[0]
     matrix = reverse(matrix)
-    return matrix, done
+
+    score = 0
+    for i in range(len(matrix)):
+        for j in range(len(matrix[i])):
+            score += matrix[i][j]
+
+    score += 2
+    return matrix, done, score
+
+
+def random_move(matrix, nr_lines):
+    i = random.randint(0,3)
+    if i == 0:
+        return right(matrix, nr_lines)
+    elif i == 1:
+        return left(matrix, nr_lines)
+    elif i == 2:
+        return up(matrix, nr_lines)
+    elif i == 3:
+        return down(matrix, nr_lines)
+
+
+def add_new_tile(board):
+    tile_value = NEW_TILE_DISTRIBUTION[np.random.randint(0, len(NEW_TILE_DISTRIBUTION))]
+    tile_row_options, tile_col_options = np.nonzero(np.logical_not(board))
+    tile_loc = np.random.randint(0, len(tile_row_options))
+    board[tile_row_options[tile_loc]][tile_col_options[tile_loc]] = tile_value
+    return board
+
+
+def get_search_params(move_number):
+    searches_per_move = SPM_SCALE_PARAM * (1+(move_number // SEARCH_PARAM))
+    search_length = SL_SCALE_PARAM * (1+(move_number // SEARCH_PARAM))
+    return searches_per_move, search_length
